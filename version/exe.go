@@ -288,7 +288,13 @@ func (x *machoExe) ReadData(addr, size uint64) ([]byte, error) {
 func (x *machoExe) Symbols() ([]sym, error) {
 	var out []sym
 	for _, s := range x.f.Symtab.Syms {
-		out = append(out, sym{s.Name, s.Value, 0})
+		if (s.Type & 0xe0) != 0 {
+			// Symbol type with any of the bits in 0xe0 set are debugging symbols.
+			// We won't be able to use this kind of entry to read the symbol's value,
+			// so ignore it.
+			continue
+		}
+			out = append(out, sym{s.Name, s.Value, 0})
 	}
 	return out, nil
 }
